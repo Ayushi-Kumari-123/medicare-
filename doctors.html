@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Doctors - MediCare Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">✚</div>
+        <div><span>MediCare</span><span style="color: var(--primary);">Pulse</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="doctors.html" class="nav-link active">Doctors</a></li>
+        <li><a href="dashboard.html" class="nav-link" id="nav-dashboard-link" style="display: none;">My Appointments</a></li>
+      </ul>
+      <div class="nav-actions" id="nav-user-actions">
+        <a href="login.html" class="btn btn-primary btn-sm">Sign In / Register</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">
+          Find a Doctor
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1.05rem;">
+          Browse our certified physicians and book consultation slots instantly.
+        </p>
+      </div>
+
+      <!-- Filter / Search Toolbar -->
+      <div style="background: #ffffff; padding: 1.25rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;">
+        <div style="flex: 1; min-width: 260px;">
+          <input 
+            type="text" 
+            id="doc-search-input" 
+            class="form-control" 
+            placeholder="Search by doctor name or specialization..." 
+          />
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <label style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Specialty:</label>
+          <select id="doc-specialty-select" class="form-control" style="width: auto; min-width: 180px;">
+            <option value="">All Specialties</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Orthopedics">Orthopedics</option>
+            <option value="General Medicine">General Medicine</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Doctor Cards Container -->
+      <div id="doctor-list-grid" class="doctor-grid">
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+          Loading doctors from Firestore...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div><strong>✚ MediCarePulse</strong> — Certified Doctor Scheduling Platform</div>
+      <div>&copy; 2026 MediCare Pulse Health Systems. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Firestore Fetch Logic -->
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { collection, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+    // Update navbar on user state
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById('nav-dashboard-link').style.display = 'inline-block';
+        document.getElementById('nav-user-actions').innerHTML = `
+          <div class="user-badge"><span>👤 ${user.displayName || user.email.split('@')[0]}</span></div>
+          <button class="btn btn-secondary btn-sm" id="btn-logout">Sign Out</button>
+        `;
+        document.getElementById('btn-logout')?.addEventListener('click', async () => {
+          await signOut(auth);
+          window.location.reload();
+        });
+      }
+    });
+
+    const INITIAL_ROSTER = [
+      { id: 'doc-1', name: 'Dr. Sarah Jenkins, MD', specialization: 'Cardiology', experienceYears: 14, rating: 4.9, availableSlots: ['09:00 AM', '10:30 AM', '01:30 PM', '03:00 PM'] },
+      { id: 'doc-2', name: 'Dr. Michael Chang, MD', specialization: 'Dermatology', experienceYears: 9, rating: 4.8, availableSlots: ['09:30 AM', '11:00 AM', '02:00 PM', '03:30 PM'] },
+      { id: 'doc-3', name: 'Dr. Priya Sharma, MBBS', specialization: 'Neurology', experienceYears: 16, rating: 5.0, availableSlots: ['10:00 AM', '11:30 AM', '02:30 PM', '04:00 PM'] },
+      { id: 'doc-4', name: 'Dr. Robert Taylor, MD', specialization: 'Pediatrics', experienceYears: 11, rating: 4.9, availableSlots: ['08:30 AM', '10:00 AM', '01:00 PM', '02:30 PM'] },
+      { id: 'doc-5', name: 'Dr. Elena Rostova, MD', specialization: 'Orthopedics', experienceYears: 13, rating: 4.7, availableSlots: ['09:00 AM', '11:00 AM', '02:00 PM', '04:00 PM'] },
+      { id: 'doc-6', name: 'Dr. Marcus Vance, DO', specialization: 'General Medicine', experienceYears: 8, rating: 4.8, availableSlots: ['09:00 AM', '11:30 AM', '02:00 PM', '03:30 PM'] }
+    ];
+
+    let allDoctors = [];
+    const grid = document.getElementById('doctor-list-grid');
+    const searchInput = document.getElementById('doc-search-input');
+    const specialtySelect = document.getElementById('doc-specialty-select');
+
+    async function loadDoctors() {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'doctors'));
+        if (querySnapshot.empty) {
+          // Auto-seed into Firestore if empty
+          for (const docItem of INITIAL_ROSTER) {
+            const { id, ...data } = docItem;
+            await setDoc(doc(db, 'doctors', id), data);
+          }
+          allDoctors = INITIAL_ROSTER;
+        } else {
+          allDoctors = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        renderDoctors();
+      } catch (err) {
+        console.warn('Firestore fetch fallback:', err);
+        allDoctors = INITIAL_ROSTER;
+        renderDoctors();
+      }
+    }
+
+    function renderDoctors() {
+      const search = searchInput.value.toLowerCase().trim();
+      const spec = specialtySelect.value;
+
+      const filtered = allDoctors.filter(doc => {
+        const matchesSearch = doc.name.toLowerCase().includes(search) || (doc.specialization || '').toLowerCase().includes(search);
+        const matchesSpec = !spec || (doc.specialization || '').toLowerCase() === spec.toLowerCase();
+        return matchesSearch && matchesSpec;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">No doctors match your criteria</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Try adjusting your search terms or specialty filter.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(doc => {
+        const initials = (doc.name || 'DR').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const slots = doc.availableSlots || ['09:00 AM', '11:00 AM', '02:00 PM'];
+
+        return `
+          <div class="doctor-card">
+            <div class="doctor-card-top">
+              <div class="doctor-avatar">${doc.imageUrl ? `<img src="${doc.imageUrl}" style="width:100%;height:100%;border-radius:inherit;object-fit:cover;" />` : initials}</div>
+              <div class="doctor-meta">
+                <h3>${doc.name}</h3>
+                <span class="doctor-spec">${doc.specialization}</span>
+                <div class="doctor-rating">★ ${(doc.rating || 4.9).toFixed(1)} (${doc.experienceYears || 8}+ yrs exp)</div>
+              </div>
+            </div>
+
+            <div class="doctor-slots-title">Available Time Slots:</div>
+            <div class="slot-tags">
+              ${slots.map(s => `<span class="slot-tag">${s}</span>`).join('')}
+            </div>
+
+            <div class="doctor-card-footer">
+              <span style="font-size: 0.85rem; color: var(--secondary-dark); font-weight: 700;">● Accepting Patients</span>
+              <!-- Link to booking.html with doctor's ID passed in the URL -->
+              <a href="booking.html?doctorId=${doc.id}" class="btn btn-primary btn-sm">
+                Book Appointment
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    searchInput.addEventListener('input', renderDoctors);
+    specialtySelect.addEventListener('change', renderDoctors);
+
+    loadDoctors();
+  </script>
+</body>
+</html>

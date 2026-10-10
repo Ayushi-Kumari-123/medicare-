@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patient Dashboard - MediCare Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">✚</div>
+        <div><span>MediCare</span><span style="color: var(--primary);">Pulse</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="doctors.html" class="nav-link">Doctors</a></li>
+        <li><a href="dashboard.html" class="nav-link active">My Appointments</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-logout">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+        <div>
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Patient Portal</span>
+          <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--text-main);" id="patient-greeting">
+            Welcome to your Dashboard
+          </h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem;" id="patient-email-display">
+            Loading your account details...
+          </p>
+        </div>
+
+        <div>
+          <a href="doctors.html" class="btn btn-primary">
+            + Book New Appointment
+          </a>
+        </div>
+      </div>
+
+      <!-- 24-Hour Appointment Reminder Banner -->
+      <div id="reminder-banner" style="display: none; background: #ecfeff; border: 1px solid #a5f3fc; border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-subtle);">
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <div style="font-size: 1.75rem;">🔔</div>
+            <div>
+              <h4 style="font-size: 1rem; font-weight: 800; color: #0e7490; margin-bottom: 0.2rem;">Upcoming Appointment Reminder!</h4>
+              <p style="font-size: 0.875rem; color: #155e75;" id="reminder-banner-text">
+                You have a medical consultation scheduled within the next 24 hours.
+              </p>
+            </div>
+          </div>
+          <a href="#patient-appointments-tbody" class="btn btn-primary btn-sm" style="background: #0891b2; border: none;">View Details</a>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-icon metric-blue">📅</div>
+          <div>
+            <div class="metric-val" id="count-total">0</div>
+            <div class="metric-desc">Total Appointments</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon metric-green">✓</div>
+          <div>
+            <div class="metric-val" id="count-confirmed">0</div>
+            <div class="metric-desc">Confirmed</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon metric-amber">⏳</div>
+          <div>
+            <div class="metric-val" id="count-pending">0</div>
+            <div class="metric-desc">Pending Approval</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointments Table Card -->
+      <div class="table-card">
+        <div class="table-header">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800;">My Appointments</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Synced live from Firestore</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Doctor Name</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="patient-appointments-tbody">
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  Loading your appointments from Firestore...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div><strong>✚ MediCarePulse</strong> — Certified Doctor Scheduling Platform</div>
+      <div>&copy; 2026 MediCare Pulse Health Systems. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Firebase Logic -->
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { requireAuth } from './js/auth-guard.js';
+    import { collection, query, where, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    import { signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+    const tbody = document.getElementById('patient-appointments-tbody');
+    const greeting = document.getElementById('patient-greeting');
+    const emailDisplay = document.getElementById('patient-email-display');
+    const doctorCache = {};
+
+    // Logout
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    });
+
+    // Guard: Require logged-in patient
+    requireAuth(async (user) => {
+      greeting.textContent = `Welcome back, ${user.displayName || user.email.split('@')[0]}!`;
+      emailDisplay.textContent = `Account Email: ${user.email}`;
+
+      // Query appointments for currently logged-in patient
+      const q = query(collection(db, 'appointments'), where('patientId', '==', user.uid));
+
+      onSnapshot(q, async (snapshot) => {
+        const apts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // Update counts
+        document.getElementById('count-total').textContent = apts.length;
+        document.getElementById('count-confirmed').textContent = apts.filter(a => a.status === 'Confirmed').length;
+        document.getElementById('count-pending').textContent = apts.filter(a => a.status === 'Pending').length;
+
+        // Check for 24-hour upcoming appointment reminder
+        checkUpcoming24hReminders(apts);
+
+        if (apts.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <p style="font-weight: 600; margin-bottom: 0.75rem;">You have no scheduled appointments yet.</p>
+                <a href="doctors.html" class="btn btn-primary btn-sm">Find & Book a Doctor</a>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        // Render rows
+        let rowsHtml = '';
+        for (const apt of apts) {
+          let docName = doctorCache[apt.doctorId];
+          if (!docName) {
+            try {
+              const dSnap = await getDoc(doc(db, 'doctors', apt.doctorId));
+              docName = dSnap.exists() ? dSnap.data().name : 'Certified Specialist';
+            } catch (e) {
+              docName = 'Specialist Physician';
+            }
+            doctorCache[apt.doctorId] = docName;
+          }
+
+          const badgeClass = apt.status === 'Confirmed' ? 'badge-confirmed'
+            : apt.status === 'Cancelled' ? 'badge-cancelled'
+            : 'badge-pending';
+
+          rowsHtml += `
+            <tr>
+              <td><strong>${docName}</strong></td>
+              <td>${apt.date}</td>
+              <td>${apt.time}</td>
+              <td><span class="badge ${badgeClass}">${apt.status}</span></td>
+              <td style="text-align: right;">
+                ${apt.status !== 'Cancelled' ? `
+                  <button class="btn btn-danger btn-sm btn-cancel-apt" data-id="${apt.id}">
+                    Cancel
+                  </button>
+                ` : `
+                  <a href="doctors.html" class="btn btn-secondary btn-sm">Re-book</a>
+                `}
+              </td>
+            </tr>
+          `;
+        }
+
+        tbody.innerHTML = rowsHtml;
+
+        // Cancel Appointment button handler
+        tbody.querySelectorAll('.btn-cancel-apt').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+              try {
+                btn.disabled = true;
+                await updateDoc(doc(db, 'appointments', btn.dataset.id), {
+                  status: 'Cancelled'
+                });
+              } catch (err) {
+                alert('Could not cancel appointment: ' + err.message);
+                btn.disabled = false;
+              }
+            }
+          });
+        });
+      });
+    });
+
+    function parseAppointmentDateTime(dateStr, timeStr) {
+      if (!dateStr) return null;
+      if (!timeStr) return new Date(dateStr);
+      try {
+        const parts = timeStr.trim().split(' ');
+        const timePart = parts[0];
+        const modifier = parts[1] ? parts[1].toUpperCase() : '';
+        let [hours, minutes] = timePart.split(':').map(Number);
+        if (modifier === 'PM' && hours < 12) hours += 12;
+        if (modifier === 'AM' && hours === 12) hours = 0;
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d, hours || 0, minutes || 0);
+      } catch (e) {
+        return new Date(dateStr);
+      }
+    }
+
+    function checkUpcoming24hReminders(apts) {
+      const reminderBanner = document.getElementById('reminder-banner');
+      const reminderText = document.getElementById('reminder-banner-text');
+      if (!reminderBanner || !reminderText) return;
+
+      const now = new Date();
+      const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      // Find earliest upcoming appointment within next 24h that isn't cancelled
+      const upcoming = apts.filter(a => a.status !== 'Cancelled').map(a => {
+        return { ...a, parsedDate: parseAppointmentDateTime(a.date, a.time) };
+      }).filter(a => a.parsedDate && a.parsedDate >= now && a.parsedDate <= in24Hours)
+        .sort((a, b) => a.parsedDate - b.parsedDate)[0];
+
+      if (upcoming) {
+        reminderBanner.style.display = 'block';
+        reminderText.textContent = `You have an appointment on ${upcoming.date} at ${upcoming.time} (within the next 24 hours). Status: ${upcoming.status}.`;
+      } else {
+        reminderBanner.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

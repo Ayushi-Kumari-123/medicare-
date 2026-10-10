@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediCare Pulse - Doctor Appointment Booking</title>
+  <meta name="description" content="Book top-rated doctors in seconds with real-time consultation slots.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">✚</div>
+        <div><span>MediCare</span><span style="color: var(--primary);">Pulse</span></div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link active">Home</a></li>
+        <li><a href="doctors.html" class="nav-link">Doctors</a></li>
+        <li><a href="dashboard.html" class="nav-link" id="nav-dashboard-link" style="display: none;">My Appointments</a></li>
+        <li><a href="admin.html" class="nav-link" id="nav-admin-link">Admin Console</a></li>
+      </ul>
+
+      <div class="nav-actions" id="nav-user-actions">
+        <a href="login.html" class="btn btn-primary btn-sm" id="nav-login-btn">Login / Register</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="main-content">
+    <div class="container">
+      <section class="hero-wrapper">
+        <div class="hero-text-col">
+          <div class="hero-pill">
+            <span>✨</span> Next-Gen Healthcare Scheduling
+          </div>
+          <h1 class="hero-title">
+            Book Top-Rated <span class="gradient-text">Doctors</span> With Zero Wait Time.
+          </h1>
+          <p class="hero-desc">
+            Connect with board-certified medical specialists, browse available time slots in real time, and manage your health appointments effortlessly.
+          </p>
+          <div class="hero-actions">
+            <a href="doctors.html" class="btn btn-primary btn-lg" id="hero-book-btn">
+              Book Appointment
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="login.html" class="btn btn-secondary btn-lg" id="hero-login-btn">
+              Patient Login
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-media-col">
+          <div class="hero-image-card">
+            <img src="assets/images/hero_banner.jpg" alt="Medical Consultation" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Banner -->
+      <div class="hero-stats-banner">
+        <div class="stat-item">
+          <span class="stat-number">12,500+</span>
+          <span class="stat-label">Appointments Scheduled</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">50+</span>
+          <span class="stat-label">Verified Specialists</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">99.2%</span>
+          <span class="stat-label">Patient Satisfaction</span>
+        </div>
+      </div>
+
+      <!-- Quick Specialties -->
+      <section class="section-header">
+        <h2 class="section-title">Explore by Medical Specialty</h2>
+        <p class="section-subtitle">Find dedicated specialists tailored to your specific health requirements</p>
+      </section>
+
+      <div class="specialty-chips">
+        <a href="doctors.html" class="specialty-chip active">All Doctors</a>
+        <a href="doctors.html" class="specialty-chip">Cardiology</a>
+        <a href="doctors.html" class="specialty-chip">Dermatology</a>
+        <a href="doctors.html" class="specialty-chip">Neurology</a>
+        <a href="doctors.html" class="specialty-chip">Pediatrics</a>
+        <a href="doctors.html" class="specialty-chip">Orthopedics</a>
+      </div>
+
+      <!-- How It Works Section -->
+      <section style="margin-top: 3rem; padding: 3rem; background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">
+        <h2 class="section-title" style="margin-bottom: 0.5rem;">How MediCare Works</h2>
+        <p class="section-subtitle" style="margin-bottom: 3rem;">Three easy steps to your upcoming consultation</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem;">
+          <div>
+            <div style="width: 52px; height: 52px; background: var(--primary-light); color: var(--primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 1.5rem; font-weight: 800;">1</div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">Select Your Doctor</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Browse vetted physicians by specialty, ratings, and clinical background.</p>
+          </div>
+          <div>
+            <div style="width: 52px; height: 52px; background: var(--secondary-light); color: var(--secondary-dark); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 1.5rem; font-weight: 800;">2</div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">Pick A Free Time Slot</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Select an available calendar date and direct slot that fits your schedule.</p>
+          </div>
+          <div>
+            <div style="width: 52px; height: 52px; background: var(--accent-light); color: var(--accent); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 1.5rem; font-weight: 800;">3</div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">Instant Confirmation</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Track your appointment status live through your patient dashboard.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div><strong>✚ MediCarePulse</strong> — Certified Doctor Scheduling Platform</div>
+      <div>&copy; 2026 MediCare Pulse Health Systems. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Check Auth state for Navbar -->
+  <script type="module">
+    import { auth } from './js/firebase-config.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+    const navActions = document.getElementById('nav-user-actions');
+    const dashboardLink = document.getElementById('nav-dashboard-link');
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        dashboardLink.style.display = 'inline-block';
+        navActions.innerHTML = `
+          <div class="user-badge">
+            <span>👤 ${user.displayName || user.email.split('@')[0]}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-nav-logout">Sign Out</button>
+        `;
+        document.getElementById('btn-nav-logout')?.addEventListener('click', async () => {
+          await signOut(auth);
+          window.location.reload();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

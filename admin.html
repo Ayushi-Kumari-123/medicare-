@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - MediCare Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">🛡️</div>
+        <div><span>MediCare</span><span style="color: var(--accent);">Admin</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="doctors.html" class="nav-link">Doctors</a></li>
+        <li><a href="admin.html" class="nav-link active">Admin Console</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="index.html" class="btn btn-secondary btn-sm">Public Site</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <!-- Admin Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
+        <div>
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent); text-transform: uppercase;">Cloud Administration</span>
+          <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--text-main);">
+            Hospital Appointment Console
+          </h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">
+            Real-time Firestore appointment moderation and scheduling controls
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem;">
+          <button class="btn btn-primary btn-sm" id="btn-open-doc-modal">+ Add Specialist</button>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-icon metric-blue">📋</div>
+          <div>
+            <div class="metric-val" id="metric-total">0</div>
+            <div class="metric-desc">Total Appointments</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon metric-amber">⏳</div>
+          <div>
+            <div class="metric-val" id="metric-pending">0</div>
+            <div class="metric-desc">Pending Moderation</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon metric-green">✓</div>
+          <div>
+            <div class="metric-val" id="metric-confirmed">0</div>
+            <div class="metric-desc">Confirmed</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon metric-purple">✕</div>
+          <div>
+            <div class="metric-val" id="metric-cancelled">0</div>
+            <div class="metric-desc">Cancelled</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointments Table Card -->
+      <div class="table-card">
+        <div class="table-header">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800;">All Appointments</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Approve, reject, or update statuses directly in Firestore</p>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Filter:</label>
+            <select id="admin-filter" class="form-control" style="width: auto; padding: 0.4rem 0.75rem; font-size: 0.85rem;">
+              <option value="ALL">All Statuses</option>
+              <option value="Pending">Pending Only</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Patient Details</th>
+                <th>Doctor Name</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th style="text-align: right;">Moderation Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                  Fetching all appointments from Firestore...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Doctor Modal -->
+  <div id="add-doc-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Doctor</h3>
+        <button class="modal-close" id="modal-close-btn">&times;</button>
+      </div>
+
+      <form id="form-new-doctor">
+        <div class="form-group">
+          <label class="form-label" for="doc-name-input">Doctor Name</label>
+          <input type="text" id="doc-name-input" class="form-control" placeholder="Dr. Arthur White, MD" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="doc-spec-input">Specialization</label>
+          <select id="doc-spec-input" class="form-control" required>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Orthopedics">Orthopedics</option>
+            <option value="General Medicine">General Medicine</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="doc-slots-input">Available Slots (Comma-separated)</label>
+          <input type="text" id="doc-slots-input" class="form-control" value="09:00 AM, 11:30 AM, 02:00 PM, 04:00 PM" required />
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-doc">Save Specialist</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div><strong>🛡️ MediCarePulse Admin</strong> — Cloud Scheduling Management</div>
+      <div>&copy; 2026 MediCare Pulse Health Systems. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Firestore Administration Logic -->
+  <script type="module">
+    import { db } from './js/firebase-config.js';
+    import { 
+      collection, 
+      onSnapshot, 
+      doc, 
+      getDoc, 
+      updateDoc, 
+      addDoc 
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const tbody = document.getElementById('admin-table-body');
+    const filterSelect = document.getElementById('admin-filter');
+    const modal = document.getElementById('add-doc-modal');
+    const userCache = {};
+    const doctorCache = {};
+    let allAppointments = [];
+
+    // Modal controls
+    document.getElementById('btn-open-doc-modal').addEventListener('click', () => modal.style.display = 'flex');
+    document.getElementById('modal-close-btn').addEventListener('click', () => modal.style.display = 'none');
+    document.getElementById('modal-cancel-btn').addEventListener('click', () => modal.style.display = 'none');
+
+    // Add Doctor Form Submit
+    document.getElementById('form-new-doctor').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('doc-name-input').value.trim();
+      const spec = document.getElementById('doc-spec-input').value;
+      const rawSlots = document.getElementById('doc-slots-input').value;
+      const availableSlots = rawSlots.split(',').map(s => s.trim()).filter(Boolean);
+      const btn = document.getElementById('btn-save-doc');
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Saving to Firestore...';
+        await addDoc(collection(db, 'doctors'), {
+          name,
+          specialization: spec,
+          availableSlots,
+          experienceYears: 8,
+          rating: 4.9,
+          bio: `Experienced specialist in ${spec}.`
+        });
+        alert(`Specialist ${name} successfully added to Firestore!`);
+        modal.style.display = 'none';
+        e.target.reset();
+      } catch (err) {
+        alert('Could not save doctor: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Specialist';
+      }
+    });
+
+    import { requireAdmin } from './js/auth-guard.js';
+
+    // Route Guard: Only allow authenticated admins
+    requireAdmin((adminUser) => {
+      // Real-time listener for ALL documents in appointments collection
+      onSnapshot(collection(db, 'appointments'), async (snapshot) => {
+        allAppointments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // Update metrics
+        document.getElementById('metric-total').textContent = allAppointments.length;
+        document.getElementById('metric-pending').textContent = allAppointments.filter(a => a.status === 'Pending').length;
+        document.getElementById('metric-confirmed').textContent = allAppointments.filter(a => a.status === 'Confirmed').length;
+        document.getElementById('metric-cancelled').textContent = allAppointments.filter(a => a.status === 'Cancelled').length;
+
+        renderTable();
+      });
+    });
+
+    filterSelect.addEventListener('change', renderTable);
+
+    async function renderTable() {
+      const filter = filterSelect.value;
+      const filtered = filter === 'ALL' 
+        ? allAppointments 
+        : allAppointments.filter(a => a.status === filter);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+              No appointments found for filter "${filter}".
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let rowsHtml = '';
+      for (const apt of filtered) {
+        // Resolve patient details
+        let patientInfo = userCache[apt.patientId];
+        if (!patientInfo) {
+          try {
+            const uSnap = await getDoc(doc(db, 'users', apt.patientId));
+            patientInfo = uSnap.exists() ? uSnap.data() : { name: 'Patient (UID: ' + apt.patientId.slice(0, 5) + ')', email: '' };
+          } catch (e) {
+            patientInfo = { name: 'Patient (UID: ' + (apt.patientId || '').slice(0, 5) + ')', email: '' };
+          }
+          userCache[apt.patientId] = patientInfo;
+        }
+
+        // Resolve doctor name
+        let docName = doctorCache[apt.doctorId];
+        if (!docName) {
+          try {
+            const dSnap = await getDoc(doc(db, 'doctors', apt.doctorId));
+            docName = dSnap.exists() ? dSnap.data().name : 'Certified Doctor';
+          } catch (e) {
+            docName = 'Doctor';
+          }
+          doctorCache[apt.doctorId] = docName;
+        }
+
+        const badgeClass = apt.status === 'Confirmed' ? 'badge-confirmed'
+          : apt.status === 'Cancelled' ? 'badge-cancelled'
+          : 'badge-pending';
+
+        rowsHtml += `
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: var(--text-main);">${patientInfo.name || 'Patient'}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">${patientInfo.email || ''}</div>
+            </td>
+            <td><strong>${docName}</strong></td>
+            <td>${apt.date}</td>
+            <td>${apt.time}</td>
+            <td><span class="badge ${badgeClass}">${apt.status}</span></td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 0.4rem;">
+                <button class="btn btn-success btn-sm btn-confirm-apt" data-id="${apt.id}" ${apt.status === 'Confirmed' ? 'disabled style="opacity:0.4;"' : ''}>
+                  Confirm
+                </button>
+                <button class="btn btn-danger btn-sm btn-cancel-apt" data-id="${apt.id}" ${apt.status === 'Cancelled' ? 'disabled style="opacity:0.4;"' : ''}>
+                  Cancel
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
+      tbody.innerHTML = rowsHtml;
+
+      // Confirm button handler
+      tbody.querySelectorAll('.btn-confirm-apt:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          await updateDoc(doc(db, 'appointments', btn.dataset.id), {
+            status: 'Confirmed'
+          });
+        });
+      });
+
+      // Cancel button handler
+      tbody.querySelectorAll('.btn-cancel-apt:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          await updateDoc(doc(db, 'appointments', btn.dataset.id), {
+            status: 'Cancelled'
+          });
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Appointment - MediCare Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css">
+  <!-- EmailJS SDK for Client-Side Email Confirmations -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script type="text/javascript">
+    // Initialize EmailJS with your Public Key
+    // (emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"))
+  </script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="brand-logo">
+        <div class="brand-icon">✚</div>
+        <div><span>MediCare</span><span style="color: var(--primary);">Pulse</span></div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="doctors.html" class="nav-link">Doctors</a></li>
+        <li><a href="dashboard.html" class="nav-link">My Appointments</a></li>
+      </ul>
+      <div class="nav-actions" id="booking-nav-actions">
+        <a href="login.html" class="btn btn-primary btn-sm">Login / Register</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <div style="margin-bottom: 2rem;">
+        <a href="doctors.html" style="color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;">
+          &larr; Back to Doctor List
+        </a>
+        <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--text-main);">
+          Book Your Consultation
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1rem;">
+          Select your desired date and available consultation time slot.
+        </p>
+      </div>
+
+      <!-- Auth Warning if not logged in -->
+      <div id="booking-auth-warning" style="display: none; background: var(--primary-light); border: 1px solid #bae6fd; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem; align-items: center; justify-content: space-between;">
+        <div>
+          <strong style="color: var(--primary-dark); font-size: 1rem; display: block; margin-bottom: 0.25rem;">Please Log In First</strong>
+          <span style="color: #0369a1; font-size: 0.9rem;">You must be signed in with a patient account to reserve an appointment.</span>
+        </div>
+        <a href="login.html" class="btn btn-primary btn-sm">Log In / Register</a>
+      </div>
+
+      <!-- Booking Card Layout -->
+      <div class="booking-layout">
+        <!-- Doctor Info Sidebar -->
+        <div class="booking-summary-card" id="doctor-summary-box">
+          <div style="text-align: center;">
+            <div class="doctor-avatar" style="width: 72px; height: 72px; margin: 0 auto 1rem; font-size: 1.75rem;" id="doc-avatar">DR</div>
+            <h2 style="font-size: 1.25rem; font-weight: 800;" id="doc-name">Loading Doctor...</h2>
+            <span class="doctor-spec" id="doc-spec">Specialist</span>
+          </div>
+          <div style="border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1.25rem; font-size: 0.875rem; color: var(--text-muted);" id="doc-details">
+            Fetching profile from Firestore...
+          </div>
+        </div>
+
+        <!-- Booking Form Container -->
+        <div class="booking-form-card">
+          <!-- Success Message Container -->
+          <div id="booking-success-box" style="display: none; text-align: center; padding: 2.5rem 1.5rem;">
+            <div style="width: 64px; height: 64px; background: var(--status-confirmed-bg); color: var(--status-confirmed); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.25rem;">✓</div>
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">Appointment Requested Successfully!</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">
+              Your consultation request is now saved to Firestore with status <span class="badge badge-pending">Pending</span>. You can track its approval status in your dashboard.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+              <a href="dashboard.html" class="btn btn-primary">Go to Patient Dashboard</a>
+              <a href="doctors.html" class="btn btn-secondary">Book Another Doctor</a>
+            </div>
+          </div>
+
+          <!-- Main Booking Form -->
+          <form id="form-booking">
+            <div class="form-group">
+              <label class="form-label" for="book-date">1. Consultation Date</label>
+              <input type="date" id="book-date" class="form-control" required />
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+              <label class="form-label">2. Select Available Time Slot</label>
+              <div id="time-slots-container" class="slot-picker-grid">
+                <!-- Populated dynamically -->
+              </div>
+              <input type="hidden" id="selected-slot-value" required />
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+              <label class="form-label" for="book-notes">3. Medical Reason / Notes (Optional)</label>
+              <textarea id="book-notes" class="form-control" rows="3" placeholder="Brief reason for your visit..."></textarea>
+            </div>
+
+            <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <span style="font-size: 0.8rem; color: var(--text-muted); display: block;">Default Status:</span>
+                <span class="badge badge-pending">Pending Approval</span>
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg" id="btn-submit-booking">
+                Confirm & Book Appointment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div><strong>✚ MediCarePulse</strong> — Certified Doctor Scheduling Platform</div>
+      <div>&copy; 2026 MediCare Pulse Health Systems. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Firebase Logic -->
+  <script type="module">
+    import { auth, db } from './js/firebase-config.js';
+    import { doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+    let currentPatient = null;
+    let selectedDoctorId = new URLSearchParams(window.location.search).get('doctorId') || 'doc-1';
+    let availableDoctorSlots = ['09:00 AM', '10:30 AM', '02:00 PM', '04:00 PM'];
+
+    const authWarning = document.getElementById('booking-auth-warning');
+    const submitBtn = document.getElementById('btn-submit-booking');
+    const form = document.getElementById('form-booking');
+    const successBox = document.getElementById('booking-success-box');
+    const slotsGrid = document.getElementById('time-slots-container');
+    const slotInput = document.getElementById('selected-slot-value');
+
+    // Default min date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const minDateStr = tomorrow.toISOString().split('T')[0];
+    const dateInput = document.getElementById('book-date');
+    dateInput.min = minDateStr;
+    dateInput.value = minDateStr;
+
+    // Check user auth
+    onAuthStateChanged(auth, (user) => {
+      currentPatient = user;
+      const navActions = document.getElementById('booking-nav-actions');
+
+      if (!user) {
+        authWarning.style.display = 'flex';
+        submitBtn.disabled = true;
+        submitBtn.title = 'Please log in to submit';
+        document.querySelector('#booking-auth-warning a')?.addEventListener('click', () => {
+          sessionStorage.setItem('redirectAfterLogin', window.location.href);
+        });
+        if (navActions) {
+          navActions.innerHTML = `<a href="login.html" class="btn btn-primary btn-sm">Login / Register</a>`;
+        }
+      } else {
+        authWarning.style.display = 'none';
+        submitBtn.disabled = false;
+        if (navActions) {
+          navActions.innerHTML = `
+            <div class="user-badge"><span>👤 ${user.displayName || user.email.split('@')[0]}</span></div>
+            <button class="btn btn-secondary btn-sm" id="btn-booking-logout">Sign Out</button>
+          `;
+          document.getElementById('btn-booking-logout')?.addEventListener('click', async () => {
+            const { signOut } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js");
+            await signOut(auth);
+            window.location.reload();
+          });
+        }
+      }
+    });
+
+    // Load Doctor Details
+    async function loadDoctor() {
+      try {
+        const docSnap = await getDoc(doc(db, 'doctors', selectedDoctorId));
+        if (docSnap.exists()) {
+          const docData = docSnap.data();
+          document.getElementById('doc-name').textContent = docData.name;
+          document.getElementById('doc-spec').textContent = docData.specialization;
+          document.getElementById('doc-avatar').textContent = (docData.name || 'DR').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+          document.getElementById('doc-details').innerHTML = `
+            <p style="margin-bottom: 0.5rem;"><strong>Specialization:</strong> ${docData.specialization}</p>
+            <p style="margin-bottom: 0.5rem;"><strong>Experience:</strong> ${docData.experienceYears || 10}+ Years</p>
+            <p><strong>Rating:</strong> ★ ${(docData.rating || 4.9).toFixed(1)}</p>
+          `;
+          if (docData.availableSlots && docData.availableSlots.length > 0) {
+            availableDoctorSlots = docData.availableSlots;
+          }
+        } else {
+          document.getElementById('doc-name').textContent = 'Dr. Sarah Jenkins, MD';
+          document.getElementById('doc-spec').textContent = 'Cardiology';
+        }
+      } catch (err) {
+        console.warn('Could not fetch doctor details:', err);
+        document.getElementById('doc-name').textContent = 'Dr. Sarah Jenkins, MD';
+        document.getElementById('doc-spec').textContent = 'Cardiology';
+      }
+      renderSlots();
+    }
+
+    function renderSlots() {
+      slotsGrid.innerHTML = availableDoctorSlots.map(slot => `
+        <button type="button" class="slot-btn" data-slot="${slot}">${slot}</button>
+      `).join('');
+
+      slotsGrid.querySelectorAll('.slot-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          slotsGrid.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          slotInput.value = btn.dataset.slot;
+        });
+      });
+    }
+
+    // Submit Booking to Firestore
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentPatient) {
+        alert('Please log in with your patient account before booking.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const date = dateInput.value;
+      const time = slotInput.value;
+      const notes = document.getElementById('book-notes').value.trim();
+
+      if (!time) {
+        alert('Please click on one of the available time slots.');
+        return;
+      }
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving to Firestore...';
+
+        // Save new document to Firestore collection 'appointments'
+        await addDoc(collection(db, 'appointments'), {
+          patientId: currentPatient.uid,
+          doctorId: selectedDoctorId,
+          date: date,
+          time: time,
+          status: 'Pending',
+          notes: notes,
+          createdAt: new Date().toISOString()
+        });
+
+        // Attempt sending email via EmailJS (client-side)
+        await sendConfirmationEmail({
+          patientName: currentPatient.displayName || currentPatient.email.split('@')[0],
+          patientEmail: currentPatient.email,
+          doctorName: document.getElementById('doc-name').textContent,
+          appointmentDate: date,
+          appointmentTime: time,
+          notes: notes || 'None provided'
+        });
+
+        // Show success view
+        form.style.display = 'none';
+        successBox.style.display = 'block';
+      } catch (err) {
+        alert('Failed to save appointment: ' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Confirm & Book Appointment';
+      }
+    });
+
+    async function sendConfirmationEmail(params) {
+      // EmailJS configuration keys (replace with your keys from https://dashboard.emailjs.com)
+      const SERVICE_ID = 'service_medicare';
+      const TEMPLATE_ID = 'template_booking_confirm';
+      const PUBLIC_KEY = 'YOUR_EMAILJS_PUBLIC_KEY';
+
+      if (window.emailjs && PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+        try {
+          await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+            to_name: params.patientName,
+            to_email: params.patientEmail,
+            doctor_name: params.doctorName,
+            appointment_date: params.appointmentDate,
+            appointment_time: params.appointmentTime,
+            notes: params.notes
+          }, PUBLIC_KEY);
+          console.log('Confirmation email dispatched via EmailJS');
+        } catch (mailErr) {
+          console.warn('EmailJS send note:', mailErr);
+        }
+      } else {
+        console.log('EmailJS simulated confirmation (add public key to send live emails):', params);
+      }
+    }
+
+    loadDoctor();
+  </script>
+</body>
+</html>
